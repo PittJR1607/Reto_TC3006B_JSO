@@ -1,4 +1,4 @@
-# Reto_TC3006B_JSO# **Proyecto de Predicción de Tarifas Aéreas**
+#**Proyecto de Predicción de Tarifas Aéreas**
 
 ## **Descripción del Proyecto**
 Este proyecto tiene como objetivo desarrollar modelos de aprendizaje automático para predecir las tarifas aéreas en los Estados Unidos. El proyecto incluye dos objetivos principales:
