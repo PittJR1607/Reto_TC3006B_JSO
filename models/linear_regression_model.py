@@ -1,110 +1,113 @@
 import pandas as pd
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
 
+# Load the dataset
+file_path = './dataset/cleaned_airline_fares.csv'
+df = pd.read_csv(file_path)
 
-class LinearRegressionModel:
-    def __init__(self):
-        self.params = []
-        self.__errors__ = []
-    
-    def h(self, sample):
-        """Hypothesis function to predict the outcome."""
-        return sum(p * x for p, x in zip(self.params, sample))
+# Select relevant columns for regression
+columns_needed = [
+    'Year', 'quarter', 'city1', 'city2', 'airport_1', 'airport_2',
+    'nsmiles', 'passengers', 'fare', 'carrier_lg', 'fare_lg',
+    'carrier_low', 'fare_low'
+]
+df_cleaned = df[columns_needed]
 
-    def fit(self, samples, y, alfa=0.01, epochs=1000):
-        """Train the model using Gradient Descent."""
-        self.params = [0] * len(samples[0])  # Initialize parameters
-        samples = self.scaling(samples)  # Scale the samples
+# Drop any rows with missing values
+df_cleaned.dropna(inplace=True)
 
-        for _ in range(epochs):
-            old_params = list(self.params)
-            self.params = self.GD(samples, y, alfa)
-            self.show_errors(samples, y)
-            
-            if old_params == self.params:  # Stop if no improvement
-                break
+# Prepare the data for linear regression
+X = df_cleaned.drop(['fare'], axis=1).values
+y = df_cleaned['fare'].values
 
-    def predict(self, sample):
-        sample = [1] + sample  # Add bias term
-        return self.h(sample)
-    
-    def mean_squared_error(self, y_true, y_pred):
-        return sum((yt - yp) ** 2 for yt, yp in zip(y_true, y_pred)) / len(y_true)
-    
-    def GD(self, samples, y, alfa):
-        temp = list(self.params)
-        for j in range(len(self.params)):
-            acum = 0
-            for i in range(len(samples)):
-                error = self.h(samples[i]) - y[i]
-                acum += error * samples[i][j]
-            temp[j] -= alfa * (1/len(samples)) * acum
-        return temp
-    
-    def show_errors(self, samples, y):
-        error_acum = 0
-        for i in range(len(samples)):
-            error = self.h(samples[i]) - y[i]
-            error_acum += np.float64(error) ** 2
-        mean_error = error_acum / len(samples)
-        self.__errors__.append(mean_error)
-    
-    def scaling(self, samples):
-        samples = pd.DataFrame(samples).transpose().values.tolist() 
-        for i in range(1, len(samples)):  # Skip bias term
-            avg = sum(samples[i]) / len(samples[i])
-            max_val = max(samples[i])
-            for j in range(len(samples[i])):
-                samples[i][j] = (samples[i][j] - avg) / max_val
-        return pd.DataFrame(samples).transpose().values.tolist()
+# Shuffle the data
+indices = np.arange(X.shape[0])
+np.random.shuffle(indices)
+X = X[indices]
+y = y[indices]
 
-    def train_test_split(self, df, test_size=0.2):
-        df_shuffled = df.sample(frac=1).reset_index(drop=True)  # Shuffle the data
-        split_index = int((1 - test_size) * len(df_shuffled))
-        train_data = df_shuffled[:split_index]
-        test_data = df_shuffled[split_index:]
-        return train_data, test_data
+# Manual train-test split
+train_ratio = 0.8
+train_size = int(train_ratio * X.shape[0])
 
-# Load the cleaned dataset
-df = pd.read_csv('Cleaned_US_Airline_Fares_DS.csv')
+X_train = X[:train_size]
+X_test = X[train_size:]
+y_train = y[:train_size]
+y_test = y[train_size:]
 
-# Initialize the linear regression model
-model = LinearRegressionModel()
+# Normalize the features
+def normalize(X):
+    return (X - np.mean(X, axis=0)) / np.std(X, axis=0)
 
-# Define the input (features) and output (target)
-X = df[['nsmiles', 'citymarketid_1', 'citymarketid_2']].values.tolist()
-y = df['fare'].tolist()
+X_train = normalize(X_train)
+X_test = normalize(X_test)
 
-# Split the data into training and testing sets
-train_data, test_data = model.train_test_split(df)
+# Linear regression functions
+def predict(params, X):
+    return np.dot(X, params[:-1]) + params[-1]
 
-# Separate features and target for training and testing sets
-X_train = train_data[['nsmiles', 'citymarketid_1', 'citymarketid_2']].values.tolist()
-y_train = train_data['fare'].tolist()
-X_test = test_data[['nsmiles', 'citymarketid_1', 'citymarketid_2']].values.tolist()
-y_test = test_data['fare'].tolist()
+def mean_squared_error(params, X, y):
+    predictions = predict(params, X)
+    errors = (predictions - y) ** 2
+    return np.mean(errors)
 
-# Train the model
-model.fit(X_train, y_train, alfa=0.01, epochs=10000)
+def gradient_descent(params, X, y, lr, lambda_reg=0.01):
+    predictions = predict(params, X)
+    errors = predictions - y
+    gradient = np.dot(X.T, errors) / len(y)
+    params[:-1] -= lr * (gradient + lambda_reg * params[:-1])
+    params[-1] -= lr * np.mean(errors)
+    return params
 
-# Make predictions on the testing set
-y_pred = [model.predict(sample) for sample in X_test]
+# Initialize parameters
+params = np.zeros(X_train.shape[1] + 1)
 
-# Calculate the Mean Squared Error
-mse = model.mean_squared_error(y_test, y_pred)
-print(f"Mean Squared Error: {mse}")
+# Learning rate
+lr = 0.01
 
-# Plotting the training and testing data
-plt.scatter(range(len(y_test)), y_test, color='blue', label='Actual Test Data')
-plt.plot(range(len(y_test)), y_pred, color='red', label='Predicted Test Data')
-plt.xlabel('Test Data Points')
-plt.ylabel('Fare')
-plt.title('Linear Regression on Airline Fares')
+# Number of iterations
+epochs = 10000
+
+# Training the model
+__errors__ = []
+for epoch in range(epochs):
+    params = gradient_descent(params, X_train, y_train, lr)
+    error = mean_squared_error(params, X_train, y_train)
+    __errors__.append(error)
+    print(f'Epoch {epoch}, Mean Squared Error: {error}')
+
+# Predictions
+preds_train = predict(params, X_train)
+preds_test = predict(params, X_test)
+
+# Evaluation of the predictions
+mse_train = mean_squared_error(params, X_train, y_train)
+mse_test = mean_squared_error(params, X_test, y_test)
+print(f'MSE on Train Data: {mse_train}')
+print(f'MSE on Test Data: {mse_test}')
+
+# Plot the error over iterations
+plt.plot(__errors__)
+plt.title('Linear Regression Error per Iteration')
+plt.xlabel('Iterations')
+plt.ylabel('Mean Squared Error')
+plt.show()
+
+# Scatter plot of predictions vs actual values (Train)
+plt.scatter(range(len(preds_train)), preds_train, color='blue', alpha=0.2, label='Predictions (Train)')
+plt.scatter(range(len(y_train)), y_train, color='red', alpha=0.2, label='Actual Values (Train)')
+plt.title('Predictions vs Actual Values (Train)')
+plt.xlabel('Sample Index')
+plt.ylabel('Fare Value')
 plt.legend()
 plt.show()
 
-# Example of predicting fares for future flights
-future_flights = [[1000, 305, 606], [1500, 405, 506], [2000, 305, 806]]  # Example future samples
-future_fare_predictions = [model.predict(flight) for flight in future_flights]
-print(f"Predicted fares for future flights: {future_fare_predictions}")
+# Scatter plot of predictions vs actual values (Test)
+plt.scatter(range(len(preds_test)), preds_test, color='green', alpha=0.5, label='Predictions (Test)')
+plt.scatter(range(len(y_test)), y_test, color='orange', alpha=0.5, label='Actual Values (Test)')
+plt.title('Predictions vs Actual Values (Test)')
+plt.xlabel('Sample Index')
+plt.ylabel('Fare Value')
+plt.legend()
+plt.show()

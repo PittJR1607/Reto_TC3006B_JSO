@@ -18,7 +18,7 @@ df_cleaned = df[columns_needed]
 df_cleaned.dropna(inplace=True)
 
 # Define a binary target variable
-threshold = 300  # Example threshold for fare
+threshold = 1000  # Example threshold for fare
 df_cleaned['fare_above_threshold'] = (df_cleaned['fare'] > threshold).astype(int)
 
 # Prepare the data for logistic regression
@@ -76,7 +76,7 @@ params = np.zeros(X_train.shape[1] + 1)
 lr = 0.03
 
 # Number of iterations
-epochs = 1000
+epochs = 5000
 
 # Training the model
 __errors__ = []
