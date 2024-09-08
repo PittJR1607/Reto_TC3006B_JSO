@@ -39,7 +39,7 @@ X_test_scaled = scaler.transform(X_test)
 # Build the neural network model
 inputs = tf.keras.Input(shape=(X_train_scaled.shape[1],))
 
-# Add layers (you can modify the architecture if necessary)
+# Add layers 
 x = tf.keras.layers.Dense(64, activation='relu')(inputs)
 x = tf.keras.layers.Dense(32, activation='relu')(x)
 x = tf.keras.layers.Dense(16, activation='relu')(x)
