@@ -70,7 +70,7 @@ model.compile(optimizer='adam', loss='mean_squared_error')
 mse_callback = MSECallback(validation_data=(X_test_scaled, y_test))
 history = model.fit(
     X_train_scaled, y_train, 
-    epochs=10, 
+    epochs=20, 
     batch_size=32, 
     validation_data=(X_test_scaled, y_test), 
     callbacks=[mse_callback]
@@ -161,6 +161,76 @@ plt.title('Actual vs Predicted Fares by Airport (Origin)')
 plt.xlabel('Airport 1 (Origin)')
 plt.ylabel('Fare')
 plt.xticks(rotation=90)
+plt.legend()
+plt.grid(True)
+plt.show()
+
+# ------------------------------------------
+# MEJORA DEL MODELO CON DROPOUT Y BATCH NORMALIZATION
+# ------------------------------------------
+
+
+# Construir el modelo con Dropout y Batch Normalization
+inputs = tf.keras.Input(shape=(X_train_scaled.shape[1],))
+x = tf.keras.layers.Dense(64, activation='relu')(inputs)
+x = tf.keras.layers.BatchNormalization()(x)
+x = tf.keras.layers.Dropout(0.2)(x)
+x = tf.keras.layers.Dense(32, activation='relu')(x)
+x = tf.keras.layers.BatchNormalization()(x)
+x = tf.keras.layers.Dropout(0.2)(x)
+x = tf.keras.layers.Dense(16, activation='relu')(x)
+x = tf.keras.layers.BatchNormalization()(x)
+outputs = tf.keras.layers.Dense(1)(x)
+model = tf.keras.Model(inputs=inputs, outputs=outputs)
+
+# Compilar el modelo
+model.compile(optimizer='adam', loss='mean_squared_error')
+
+# --------------------------
+# 3. Entrenar el modelo
+# --------------------------
+mse_callback = MSECallback(validation_data=(X_test_scaled, y_test))
+
+history = model.fit(
+    X_train_scaled, y_train,
+    epochs=20, 
+    batch_size=32, 
+    validation_data=(X_test_scaled, y_test),
+    callbacks=[mse_callback]
+)
+
+# --------------------------
+# 4. Evaluar el modelo
+# --------------------------
+y_pred = model.predict(X_test_scaled)
+final_mse = mean_squared_error(y_test, y_pred)
+final_r2 = r2_score(y_test, y_pred)
+
+print(f'Final Mean Squared Error (MSE): {final_mse}')
+print(f'Final R-squared (R²): {final_r2}')
+
+# --------------------------
+# 5. Visualización de resultados
+# --------------------------
+
+# Predicciones vs Tarifas Reales
+plt.figure(figsize=(10, 6))
+plt.scatter(y_test, y_pred, alpha=0.5)
+plt.plot([min(y_test), max(y_test)], [min(y_test), max(y_test)], color='red', linestyle='--', label='Perfect Fit')
+plt.title('Predicted vs Actual Fares')
+plt.xlabel('Actual Fare')
+plt.ylabel('Predicted Fare')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+# Pérdida de entrenamiento y validación a lo largo de las épocas
+plt.figure(figsize=(10, 6))
+plt.plot(history.history['loss'], label='Training Loss (MSE)')
+plt.plot(history.history['val_loss'], label='Validation Loss (MSE)')
+plt.title('Training and Validation Loss over Epochs')
+plt.xlabel('Epochs')
+plt.ylabel('Mean Squared Error (MSE)')
 plt.legend()
 plt.grid(True)
 plt.show()
