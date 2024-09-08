@@ -1,4 +1,5 @@
-# Reto_TC3006C_JSO
+# **Proyecto de Predicción de Tarifas Aéreas**
+
 
 Este repositorio contiene un proyecto completo de predicción de tarifas aéreas utilizando técnicas avanzadas de **Machine Learning**, específicamente redes neuronales. Se busca modelar y predecir precios de vuelos en función de diversas características del dataset como la distancia, aerolíneas, y aeropuertos, optimizando el modelo para obtener predicciones precisas y generalizables.
 
