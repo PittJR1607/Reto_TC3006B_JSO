@@ -17,21 +17,20 @@ df_cleaned = df[columns_needed]
 # Drop any rows with missing values
 df_cleaned.dropna(inplace=True)
 
-# Define a binary target variable
-threshold = 1000  # Example threshold for fare
+threshold = 600  #fare threshold
+
 df_cleaned['fare_above_threshold'] = (df_cleaned['fare'] > threshold).astype(int)
 
-# Prepare the data for logistic regression
+
 X = df_cleaned.drop(['fare', 'fare_above_threshold'], axis=1).values
 y = df_cleaned['fare_above_threshold'].values
 
-# Shuffle the data
+
 indices = np.arange(X.shape[0])
 np.random.shuffle(indices)
 X = X[indices]
 y = y[indices]
 
-# Manual train-test split
 train_ratio = 0.8
 train_size = int(train_ratio * X.shape[0])
 
@@ -73,10 +72,10 @@ def gradient_descent(params, X, y, lr, lambda_reg=0.01):
 params = np.zeros(X_train.shape[1] + 1)
 
 # Learning rate
-lr = 0.03
+lr = 0.01
 
 # Number of iterations
-epochs = 5000
+epochs = 3000
 
 # Training the model
 __errors__ = []
@@ -104,17 +103,18 @@ plt.xlabel('Iterations')
 plt.ylabel('Cross-Entropy Error')
 plt.show()
 
-# Scatter plot of predictions vs actual values
-plt.scatter(range(len(preds_train)), preds_train, color='blue', alpha=0.5, label='Predictions (Train)')
-plt.scatter(range(len(y_train)), y_train, color='red', alpha=0.5, label='Actual Values (Train)')
+# Scatter plot for training data
+plt.scatter(np.arange(len(preds_train)), preds_train, color='blue', alpha=0.5, label='Predictions (Train)')
+plt.scatter(np.arange(len(y_train)), y_train, color='red', alpha=0.5, label='Actual Values (Train)')
 plt.title('Scatter Plot of Predictions vs Actual Values (Train)')
 plt.xlabel('Sample Index')
 plt.ylabel('Binary Outcome')
 plt.legend()
 plt.show()
 
-plt.scatter(range(len(preds_test)), preds_test, color='green', alpha=0.5, label='Predictions (Test)')
-plt.scatter(range(len(y_test)), y_test, color='orange', alpha=0.5, label='Actual Values (Test)')
+# Scatter plot for test data
+plt.scatter(np.arange(len(preds_test)) , preds_test, color='green', alpha=0.5, label='Predictions (Test)', marker='o')
+plt.scatter(np.arange(len(y_test)) , y_test, color='orange', alpha=0.5, label='Actual Values (Test)', marker='x')
 plt.title('Scatter Plot of Predictions vs Actual Values (Test)')
 plt.xlabel('Sample Index')
 plt.ylabel('Binary Outcome')
